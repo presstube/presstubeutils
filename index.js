@@ -1,8 +1,7 @@
-import "createjs";
+const cjs = createjs; // this will throw if createjs not already here
+// figure that out someday maybe
 
-console.log("createjs: ", createjs);
-
-const PTUtils = {
+const presstubeutils = {
   distance(pt1, pt2) {
     // Implementation for distance calculation
     console.log("ptutils distance here!");
@@ -15,6 +14,17 @@ const PTUtils = {
     // Implementation for fartypants
     console.log("ptutils fartypants here!");
   },
+
+  makeTriangle(color, width, height) {
+    var triangle = new cjs.Shape();
+    triangle.graphics
+      .beginFill(color)
+      .lineTo(width / 2, 0)
+      .lineTo(0, -height)
+      .lineTo(-width / 2, 0)
+      .lineTo(0, 0);
+    return triangle;
+  },
 };
 
-module.exports = PTUtils;
+module.exports = presstubeutils;
