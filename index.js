@@ -37,6 +37,67 @@ const PTUtils = {
     subject.rotation = PTUtils.normalizeRotation(subject.rotation);
   },
 
+  springRotateToDegree({
+    subject,
+    targetDegree,
+    spring = 0.1,
+    friction = 0.8,
+    offset = 0,
+  }) {
+    targetDegree = PTUtils.normalizeRotation(targetDegree);
+    let subDeg = subject.rotation + offset;
+    let totalDist = targetDegree - subDeg;
+    if (!subject.vR) {
+      subject.vR = 0;
+    }
+    if (totalDist < -180) {
+      targetDegree += 360;
+    } else if (totalDist > 180) {
+      subDeg += 360;
+    }
+    totalDist = targetDegree - subDeg;
+    subject.vR += totalDist * spring;
+    subject.vR *= friction;
+    subject.rotation += subject.vR;
+    subject.rotation = PTUtils.normalizeRotation(subject.rotation);
+  },
+
+  springScaleTo({
+    subject,
+    targetScale,
+    spring = 0.1,
+    friction = 0.8,
+    offset = 0,
+  }) {
+    let totalDist = targetScale - subject.scale;
+    if (!subject.vS) {
+      subject.vS = 0;
+    }
+    subject.vS += totalDist * spring;
+    subject.vS *= friction;
+    subject.scale += subject.vS;
+  },
+
+  loadAALib({ path, id }) {
+    const AALibScript = document.createElement("script");
+    return new Promise((resolve, reject) => {
+      AALibScript.setAttribute("src", path);
+      document.body.appendChild(AALibScript);
+      AALibScript.addEventListener(
+        "load",
+        () => {
+          let comp = AdobeAn.getComposition(id);
+          document.body.removeChild(AALibScript);
+          resolve({
+            lib: comp.getLibrary(),
+            domElement: AALibScript,
+          });
+        },
+        false,
+      );
+    });
+  },
+
   makeTriangle(color, width, height) {
     var triangle = new cjs.Shape();
     triangle.graphics
@@ -46,6 +107,146 @@ const PTUtils = {
       .lineTo(-width / 2, 0)
       .lineTo(0, 0);
     return triangle;
+  },
+
+  makeCircle(color, radius) {
+    var triangle = new cjs.Shape();
+    triangle.graphics.beginFill(color).drawCircle(0, 0, radius);
+    return triangle;
+  },
+
+  makeRect(color, x, y, w, h) {
+    var rect = new cjs.Shape();
+    rect.graphics.beginFill(color).drawRect(x, y, w, h);
+    return rect;
+  },
+
+  makeFPSLabel() {
+    let fpsLabel = new cjs.Text("-- fps", "bold 10px Arial", "#FFF");
+    fpsLabel.x = 10;
+    fpsLabel.y = 20;
+    fpsLabel.addEventListener("tick", (e) => {
+      // console.log(cjs.Ticker.getMeasuredFPS())
+      fpsLabel.text = Math.round(cjs.Ticker.getMeasuredFPS()) + " FPS";
+    });
+    // fpsLabel.tick = function() {
+    //  this.text = Math.round(cjs.Ticker.getMeasuredFPS()) + " FPS"
+    // }
+    return fpsLabel;
+  },
+
+  polarRadians(len, angleRadians) {
+    return new cjs.Point(
+      -len * Math.sin(-angleRadians),
+      -len * Math.cos(-angleRadians),
+    );
+  },
+
+  polarDegrees(len, angleDegrees) {
+    return PTUtils.polarRadians(len, PTUtils.degreesToRads(angleDegrees));
+  },
+
+  degreesToRads(degrees) {
+    return degrees * (Math.PI / 180);
+  },
+
+  radsToDegrees(rads) {
+    var degrees = rads * (180 / Math.PI);
+    if (degrees < -180) degrees += 360;
+    return degrees;
+  },
+
+  distance(p1, p2) {
+    return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+  },
+
+  angleRadians(p1, p2) {
+    return Math.atan2(p1.y - p2.y, p1.x - p2.x) - Math.PI / 2;
+  },
+
+  angleDegrees(p1, p2) {
+    return PTUtils.radsToDegrees(PTUtils.angleRadians(p1, p2));
+  },
+
+  getOppositeAngleRadians(radians) {
+    return radians - Math.PI / 2 + Math.random() * Math.PI;
+  },
+
+  getAdjustedRotation(rotation) {
+    if (rotation > 180) {
+      rotation -= (Math.floor(rotation / 360) + 1) * 360;
+    } else if (rotation < -180) {
+      rotation += -Math.floor(rotation / 360) * 360;
+    }
+    return rotation;
+  },
+
+  addPoints(pointA, pointB) {
+    return new cjs.Point(pointA.x + pointB.x, pointA.y + pointB.y);
+  },
+
+  setStrokeColor(item, color) {
+    let currentFrame = item.currentFrame;
+    let paused = item.paused;
+    _.times(item.totalFrames, (frameIndex) => {
+      item.gotoAndStop(frameIndex);
+      _.times(item.children.length, (childIndex) => {
+        if (item.children[childIndex].graphics._stroke) {
+          item.children[childIndex].graphics._stroke.style = color;
+        }
+      });
+    });
+    item.gotoAndStop(currentFrame);
+    if (!paused) item.play();
+  },
+
+  setStrokeWidth(item, width) {
+    let currentFrame = item.currentFrame;
+    let paused = item.paused;
+    _.times(item.totalFrames, (frameIndex) => {
+      item.gotoAndStop(frameIndex);
+      _.times(item.children.length, (childIndex) => {
+        if (item.children[childIndex].graphics._stroke) {
+          item.children[childIndex].graphics._strokeStyle.width = width;
+        }
+      });
+    });
+    item.gotoAndStop(currentFrame);
+    if (!paused) item.play();
+  },
+
+  setFillColor(item, color) {
+    let currentFrame = item.currentFrame;
+    let paused = item.paused;
+    _.times(item.totalFrames, (frameIndex) => {
+      item.gotoAndStop(frameIndex);
+      _.times(item.children.length, (childIndex) => {
+        if (item.children[childIndex].graphics._fill) {
+          item.children[childIndex].graphics._fill.style = color;
+        }
+      });
+    });
+    item.gotoAndStop(currentFrame);
+    if (!paused) item.play();
+  },
+
+  normalizeRotation(r) {
+    r = r % 360; // normalize to 360
+    if (r > 180) {
+      return -(360 - r);
+    } else if (r <= -180) {
+      return 360 + r;
+    } else {
+      return r;
+    }
+  },
+
+  isTouchDevice() {
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0
+    );
   },
 };
 
