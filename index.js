@@ -1,3 +1,4 @@
+import _ from "lodash";
 const cjs = createjs; // this will throw if createjs not already here
 // figure that out someday maybe
 

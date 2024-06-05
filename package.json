@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/presstube/presstubeutils#readme",
   "dependencies": {
-    "createjs": "github:ryosuzuki/createjs"
+    "createjs": "github:ryosuzuki/createjs",
+    "lodash": "^4.17.21"
   }
 }
