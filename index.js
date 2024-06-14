@@ -318,6 +318,75 @@ const PTUtils = {
     });
     return normals;
   },
+
+  shapeToInstructions(shape, scaler = 1) {
+    const existingInstructions = _.cloneDeep(
+      shape.graphics._activeInstructions,
+    );
+    const instructions = existingInstructions.map((instruction) => {
+      const protoString = Object.getPrototypeOf(instruction).exec.toString();
+      const match = protoString.match(/\.\s*(\w+)/);
+      Object.keys(instruction).map((key) => {
+        instruction[key] = instruction[key] * scaler;
+      });
+      return {
+        operation: match[1],
+        instruction,
+      };
+    });
+    return instructions;
+  },
+
+  redrawShape(instructions, color = "#eee") {
+    let s = new cjs.Shape();
+    let g = s.graphics;
+    g.beginFill(color);
+
+    instructions.forEach(drawInstruction);
+
+    function drawInstruction(instr) {
+      const { operation, instruction } = instr;
+      const vals = Object.values(instruction).map((val) => {
+        return val;
+      });
+      g[operation](...vals);
+    }
+
+    return s;
+  },
+
+  makeNormals(instructions) {
+    let normalsInstructions = _.clone(instructions);
+    normalsInstructions.shift();
+    normalsInstructions.pop();
+    let normals = normalsInstructions.map((instruction, index) => {
+      let instrA =
+        index == 0
+          ? instructions[instructions.length - 1]
+          : instructions[index - 1];
+      let instrB = instruction;
+      let normal = makeNormal(instrA.instruction, instrB.instruction);
+      return normal;
+      function makeNormal(instrA, instrB) {
+        let normal = new cjs.Shape();
+        normal.graphics
+          .beginStroke("blue")
+          .setStrokeStyle(1)
+          .moveTo(0, 0)
+          .lineTo(0, -10);
+
+        let angle = PTUtils.getAdjustedRotation(
+          PTUtils.angleDegrees(instrA, instrB) - 90,
+        );
+
+        normal.x = instrB.x;
+        normal.y = instrB.y;
+        normal.rotation = angle;
+        return normal;
+      }
+    });
+    return normals;
+  },
 };
 
 module.exports = PTUtils;
