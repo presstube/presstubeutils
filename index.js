@@ -389,4 +389,4 @@ const PTUtils = {
   },
 };
 
-module.exports = PTUtils;
+export default PTUtils;
